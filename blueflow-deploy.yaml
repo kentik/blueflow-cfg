@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blueflow
+  labels:
+    app: blueflow
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: blueflow
+  template:
+    metadata:
+      labels:
+        app: blueflow
+    spec:
+      containers:
+      - name: blueflow
+        image: kentik/blueflow:v1
+        args: ["--bucket_name", "kentik-blueflow-east-bucket-1", "--regions", "us-south,us-east", "--log_level", "info", "--service_endpoint", "s3.direct.us-east.cloud-object-storage.appdomain.cloud", "--api_email", "my-email@example.com", "plan_id", "10900", "--export_id", "1607"]
+        readinessProbe:
+          httpGet:
+            path: /service/info
+            port: 8083
+          initialDelaySeconds: 5
+        resources:
+          limits:
+            memory: 1G
+          requests:
+            memory: 1G
+            cpu: 1
+        ports:
+        - name: http-ui
+          containerPort: 8083
+        env:
+          - name: IBM_VPC_API_KEY
+            value: $IBM_KEY
+          - name: KENTIK_API_TOKEN
+            value: $KENTIK_KEY
+          - name: IBM_COS_API_KEY
+            value: $IBM_COS_KEY
+          - name: IBM_SERVICE_INSTANCE
+            value: $SERVICE_INSTANCE

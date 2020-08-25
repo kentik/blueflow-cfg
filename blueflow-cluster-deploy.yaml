@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blueflow-leader
+  labels:
+    app: blueflow-leader
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: blueflow-leader
+  template:
+    metadata:
+      labels:
+        app: blueflow-leader
+    spec:
+      containers:
+      - name: blueflow
+        image: kentik/blueflow:v1
+        args: ["--bucket_name", "kentik-blueflow-east-bucket-1", "--regions", "us-south,us-east", "--log_level", "info", "--service_endpoint", "s3.direct.us-east.cloud-object-storage.appdomain.cloud", "--api_email", "my-email@example.com", "plan_id", "10900", "--export_id", "1607", "--redis", "redis:6379", "--shard_leader"]
+        readinessProbe:
+          httpGet:
+            path: /service/info
+            port: 8083
+          initialDelaySeconds: 5
+        resources:
+          limits:
+            memory: 1G
+          requests:
+            memory: 1G
+            cpu: 1
+        ports:
+        - name: http-ui
+          containerPort: 8083
+        env:
+          - name: IBM_VPC_API_KEY
+            value: $IBM_KEY
+          - name: KENTIK_API_TOKEN
+            value: $KENTIK_KEY
+          - name: IBM_COS_API_KEY
+            value: $IBM_COS_KEY
+          - name: IBM_SERVICE_INSTANCE
+            value: $SERVICE_INSTANCE
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blueflow-follower
+  labels:
+    app: blueflow-follower
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: blueflow-follower
+  template:
+    metadata:
+      labels:
+        app: blueflow-follower
+    spec:
+      containers:
+      - name: blueflow
+        image: kentik/blueflow:v1
+        args: ["--bucket_name", "kentik-blueflow-east-bucket-1", "--regions", "us-south,us-east", "--log_level", "info", "--service_endpoint", "s3.direct.us-east.cloud-object-storage.appdomain.cloud", "--api_email", "my-email@example.com", "plan_id", "10900", "--export_id", "1607", "--redis", "redis:6379", "--shard_follower"]
+        readinessProbe:
+          httpGet:
+            path: /service/info
+            port: 8083
+          initialDelaySeconds: 5
+        resources:
+          limits:
+            memory: 1G
+          requests:
+            memory: 1G
+            cpu: 1
+        ports:
+        - name: http-ui
+          containerPort: 8083
+        env:
+          - name: IBM_VPC_API_KEY
+            value: $IBM_KEY
+          - name: KENTIK_API_TOKEN
+            value: $KENTIK_KEY
+          - name: IBM_COS_API_KEY
+            value: $IBM_COS_KEY
+          - name: IBM_SERVICE_INSTANCE
+            value: $SERVICE_INSTANCE
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: blueflow-follower
+  namespace: default
+spec:
+  maxReplicas: 3
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: blueflow-follower
+  targetCPUUtilizationPercentage: 270
