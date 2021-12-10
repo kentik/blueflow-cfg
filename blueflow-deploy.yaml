@@ -18,7 +18,7 @@ spec:
       containers:
       - name: blueflow
         image: kentik/blueflow:v1
-        args: ["--bucket_name", "<bucket-name>", "--regions", "<region>, "--log_level", "info", "--service_endpoint", "s3.my-service-endpoint.cloud-object-storage.appdomain.cloud", "--api_email", "my-email@example.com", "plan_id", "<my-plan-id>", "--export_id", "<my-export-id>"]
+        args: ["--bucket_name", "<bucket-name>", "--regions", "<my-region1,my-region2>, "--log_level", "info", "--service_endpoint", "s3.my-service-endpoint.cloud-object-storage.appdomain.cloud", "--api_email", "my-email@example.com", "plan_id", "<my-plan-id>", "--export_id", "<my-export-id>"]
         readinessProbe:
           httpGet:
             path: /service/info
